@@ -6,7 +6,7 @@ image: "/assets/images/markdown.jpg"
 tag:
 - blog
 category: blog
-author: jamesfoster
+author: blaine
 description: blog_desc
 ---
 
