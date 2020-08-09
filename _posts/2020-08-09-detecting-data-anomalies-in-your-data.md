@@ -18,7 +18,7 @@ The Data Anomaly Detection Tool("DAD Tool") is a tool that can assess data for a
 Newly generated data can be difficult to trust.  Every situation is unique and some organizations are going to struggle more than others.  Generally speaking, an organization that consumes a lot of unstructured data is going go have a more challenging time trusting the data it consumes.  With that in mind, we want tools that can improve our ability to trust our data.
 
 **How?**
-The DAD Too) was created using python, Flask, and AWS...for the most part.
+The DAD Tool was created using python, Flask, and AWS...for the most part.
 
 **What else?**
 Here's a deck that was created to describe the tool: [https://www.slideshare.net/iblaine/using-airflow-for-tools-development](https://www.slideshare.net/iblaine/using-airflow-for-tools-development)
