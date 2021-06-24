@@ -35,7 +35,7 @@ disqus:
 
 # if you don't have any of social below, comment the line
 facebook: iblaine
-twitter: blainee
+twitter: iblainee
 # google: mygoogle
 instagram: blaine256
 # pinterest: mypinterest
@@ -59,7 +59,7 @@ authors:
         bio: A Data Engineer doing Data Engineer things.
         external-image: false
         picture: assets/images/blaine_profile_pic.jpg
-        twitter: blainee
+        twitter: iblainee
 
 # do you want a larger site? change the option below
 # options: [normal, large] | default: normal
