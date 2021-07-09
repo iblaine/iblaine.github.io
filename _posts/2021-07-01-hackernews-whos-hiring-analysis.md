@@ -13,6 +13,8 @@ HackerNews has a monthly [thread](https://news.ycombinator.com/item?id=27699704)
 
 The Python Notebook in git  [github.com/iblaine/hn-whoshiring-analysis](https://github.com/iblaine/hn-whoshiring-analysis).
 
+![]({{ 'assets/images/projects/hn-analysis-walkthrough.gif' | relative_url }})
+
 **Some questions we will be able to answer with this analysis...**
 * How has the popularity of "Data Engineer" changed over time?
 * How has "remote" factored into job descriptions since covid?
