@@ -34,13 +34,13 @@ disqus:
   categories: [] # only show disqus for posts that have these categories
 
 # if you don't have any of social below, comment the line
-facebook: iblaine
+# facebook: iblaine
 twitter: iblainee
 # google: mygoogle
 instagram: blaine256
 # pinterest: mypinterest
 linkedin: iblaine
-# youtube: myyoutube
+youtube: https://www.youtube.com/channel/UCERuC8qEiqZlKK_OQfjlWIw
 # spotify: myspotify
 github: iblaine
 # gitlab: mygitlab
