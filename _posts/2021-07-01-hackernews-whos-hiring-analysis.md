@@ -38,8 +38,8 @@ creates a new cell for operations.  That is it.  Each `# %%` is a cell that can 
 * cnt_unique = number of times a keyword is found in an item.
 
 **General process for this notebook**
-1. Collect every HN Who's Hiring posts.  Here we use pull up a Google search page for what should be the HN post for a given month.  Selenium is used for the scraping.
-2. For every post on HN, get every item in that post.  This is time consuming.
+1. Collect every HN Who's Hiring posts.  I'm using Google to query for what we hope is the correct HN link, take the first result & verify if it's true.  Selenium is used for the scraping.
+2. For every post on HN, get every item in that post.  This is a time consuming GET request for every item, for those items not already loaded.
 3. Parse collected data into a dict.
 4. Save dict to a file on disk.
 5. Demormalize data into a pandas dataframe.
