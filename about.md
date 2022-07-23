@@ -10,7 +10,7 @@ layout: page
 <p>Just going to copy/paste what I have up on LinkedIn...</p>
 >I am comfortable with most end to end processes within data ecosystems, including acting as a tech lead, mentoring, managing teams, full-stack development, creating data infra frameworks, data pipelines at petabyte scale, dimensional modeling, developing ETLs, tools, data architecture, and data governance.
 
-<p>Most of the time I'm doing Data Engineering.  Many of those projects are internal, exciting to me, kind of dry to others, but some of my marker projects are interesting.  This site is a good tool to share those maker projects.</p>
+<p>Most of the time I'm doing Data Engineering.  Many of those projects are internal, exciting to me, kind of dry to others, but some of my maker projects are interesting.  This site is a good tool to share those maker projects.</p>
 
 <h2>Skills</h2>
 
