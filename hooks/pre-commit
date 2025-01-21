@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Exit on error
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Check if mogrify is installed
+if ! command -v mogrify &> /dev/null; then
+    echo -e "${RED}Error: mogrify (ImageMagick) is not installed${NC}"
+    echo "Please install ImageMagick first:"
+    echo "  macOS: brew install imagemagick"
+    echo "  Linux: sudo apt-get install imagemagick"
+    exit 1
+fi
+
+# Get list of staged image files
+staged_images=$(git diff --cached --name-only --diff-filter=ACM | grep -iE '\.(jpg|jpeg|png|gif|tiff)$' || true)
+
+if [ -z "$staged_images" ]; then
+    echo -e "${GREEN}No image files staged for commit${NC}"
+    exit 0
+fi
+
+echo -e "${YELLOW}Found staged images. Removing EXIF data...${NC}"
+
+# Process each image
+for file in $staged_images; do
+    if [ -f "$file" ]; then
+        echo -e "Processing ${YELLOW}$file${NC}..."
+        
+        # Create a backup in case something goes wrong
+        cp "$file" "$file.bak"
+        
+        if mogrify -strip "$file" 2>/dev/null; then
+            rm "$file.bak"
+            git add "$file"
+            echo -e "${GREEN}✓ Successfully processed $file${NC}"
+        else
+            echo -e "${RED}Failed to process $file${NC}"
+            mv "$file.bak" "$file"
+            exit 1
+        fi
+    fi
+done
+
+echo -e "\n${GREEN}Successfully removed EXIF data from all staged images${NC}"
+exit 0
