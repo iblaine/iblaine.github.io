@@ -122,16 +122,6 @@ sitemap: false
 
   p { margin: 0; }
 
-  .deck {
-    font-size: 20px;
-    line-height: 1.55;
-    color: var(--ink);
-    /* balance, not pretty: four lines of roughly equal length read as a
-       deliberate block, where a long-long-long-short rag reads as an accident. */
-    text-wrap: balance;
-    max-width: 32rem;
-  }
-
   .lede { color: var(--ink-soft); }
 
   /* ---- hero ---- */
@@ -387,7 +377,7 @@ sitemap: false
       <canvas id="hero" aria-label="The LED wall zooming in on a pixel-art Rick until his eyes fill the panel and look left and right, then pulling back out, followed by a scrolling marquee reading The Funk Board, 8,448 lights, Santa Barbara."></canvas>
     </div>
     <p class="wall-note">Rick, zooming. The sign does this between the planes and the ships. Sped up: the wall takes half a minute over it.</p>
-    <p class="deck">It is a wall of 8,448 lights. It watches the planes going over Santa Barbara, the rockets going up from Vandenberg, the cruise ships in the channel, and whatever the businesses downstairs are up to tonight. One card at a time, forever.</p>
+    <p class="lede">It is a wall of 8,448 lights. It watches the planes going over Santa Barbara, the rockets going up from Vandenberg, the cruise ships in the channel, and whatever the businesses downstairs are up to tonight. One card at a time, forever.</p>
     <p class="lede">Nobody types any of it in. The sign is reading the same public radio traffic that air traffic control and the harbor read, and turning it into something you can watch while you finish a beer.</p>
   </header>
 
@@ -431,7 +421,7 @@ sitemap: false
 
   <section>
     <h2>How it is built</h2>
-    <p class="deck">Two computers, three thousand miles apart, and neither one can do the job alone.</p>
+    <p class="lede">Two computers, three thousand miles apart, and neither one can do the job alone.</p>
 
     <figure class="flow">
       <svg viewBox="0 0 340 404" role="img" aria-label="Flow diagram: aircraft, ship and venue data is polled every thirty seconds by an EC2 instance in Virginia, which sends one finished list over wifi to an ESP32-S3 on the back of the wall, which drives thirty-three LED panels over four data chains.">
