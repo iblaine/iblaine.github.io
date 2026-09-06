@@ -7,38 +7,702 @@ sitemap: false
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<title>The Funk Board</title>
-<!--
-  This page exists so the QR code stuck to the sign never has to change.
-  The sticker points here; here points at wherever the write-up currently
-  lives. To move the write-up, edit the two URLs below and push.
--->
-<link rel="canonical" href="https://gist.github.com/iblaine/b0554c3350592f6bf0e305249da1d173">
-<meta http-equiv="refresh" content="0; url=https://gist.github.com/iblaine/b0554c3350592f6bf0e305249da1d173">
+<meta name="description" content="The LED sign on the wall at the Waterline in Santa Barbara: what it shows, how it works, and who to write to.">
+<meta property="og:title" content="The Funk Board">
+<meta property="og:description" content="A wall of 8,448 lights that watches the planes, the rockets, the ships, and the bar downstairs.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.iblaine.com/funkboard/">
+<link rel="canonical" href="https://www.iblaine.com/funkboard/">
 <style>
-  body {
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #10171a;
-    color: #e8edec;
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    text-align: center;
-    padding: 24px;
-  }
-  a { color: #4fd3e0; }
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+  img { max-width: 100%; }
 </style>
+<title>The Funk Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+  :root {
+    --ground: #EEF1F0;
+    --surface: #FFFFFF;
+    --ink: #12191C;
+    --ink-soft: #4A5A5F;
+    --ink-faint: #7B8C90;
+    --rule: #D3DAD9;
+    --accent: #0B6F7E;
+    --accent-soft: #E2EEF0;
+    --hot: #B02A67;
+    --panel-body: #05080A;
+    --panel-edge: #1B2226;
+    --shadow: 0 1px 2px rgba(18, 25, 28, .06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0D1315;
+      --surface: #141C1F;
+      --ink: #E8EDEC;
+      --ink-soft: #A2B2B4;
+      --ink-faint: #6F8083;
+      --rule: #263236;
+      --accent: #4FD3E0;
+      --accent-soft: #16282C;
+      --hot: #FF7FB4;
+      --panel-body: #05080A;
+      --panel-edge: #1B2226;
+      --shadow: none;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0D1315;
+    --surface: #141C1F;
+    --ink: #E8EDEC;
+    --ink-soft: #A2B2B4;
+    --ink-faint: #6F8083;
+    --rule: #263236;
+    --accent: #4FD3E0;
+    --accent-soft: #16282C;
+    --hot: #FF7FB4;
+    --panel-body: #05080A;
+    --panel-edge: #1B2226;
+    --shadow: none;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 37rem;
+    margin: 0 auto;
+    padding: 28px 20px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 800;
+    font-size: clamp(38px, 12vw, 58px);
+    line-height: .94;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h2 {
+    font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  p { margin: 0; }
+
+  .deck {
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+
+  .lede { color: var(--ink-soft); }
+
+  /* ---- hero ---- */
+
+  header { display: flex; flex-direction: column; gap: 18px; }
+
+  .wall {
+    background: var(--panel-body);
+    border: 1px solid var(--panel-edge);
+    border-radius: 3px;
+    padding: 7px;
+    overflow: hidden;
+  }
+
+  canvas { display: block; width: 100%; height: auto; }
+
+  .wall-note {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    color: var(--ink-faint);
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  /* ---- card types ---- */
+
+  .kinds { display: flex; flex-direction: column; gap: 22px; }
+
+  .kind { display: flex; flex-direction: column; gap: 9px; }
+
+  .kind-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .kind-name { color: var(--ink); font-weight: 500; }
+  .kind-src { color: var(--ink-faint); }
+
+  .strip {
+    background: var(--panel-body);
+    border-radius: 2px;
+    padding: 4px 5px;
+  }
+
+  .kind p { font-size: 16.5px; color: var(--ink-soft); }
+
+  /* ---- the two computers ---- */
+
+  .flow { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .flow svg { display: block; width: 100%; max-width: 340px; height: auto; color: var(--ink); }
+
+  .flow-t {
+    font-family: "Archivo", Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    fill: currentColor;
+  }
+
+  .flow-hot { fill: var(--accent); }
+  .flow-box-hot { stroke: var(--accent); stroke-width: 1.5; }
+
+  .flow-s {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 10px;
+    fill: currentColor;
+    fill-opacity: .62;
+  }
+
+  .flow-a {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    fill: currentColor;
+    fill-opacity: .78;
+  }
+
+  figcaption {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .halves { display: flex; flex-direction: column; gap: 20px; }
+
+  .half { display: flex; flex-direction: column; gap: 6px; }
+
+  .half p:last-child { font-size: 16.5px; color: var(--ink-soft); }
+
+  .half-h {
+    font-family: "Archivo", Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: var(--ink);
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--accent);
+    align-self: flex-start;
+  }
+
+  @media (min-width: 640px) {
+    .halves { flex-direction: row; gap: 28px; }
+    .half { flex: 1; }
+  }
+
+  /* ---- spec ---- */
+
+  .spec {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 18px;
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .spec dt {
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: 11px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .spec dd {
+    margin: 0;
+    color: var(--ink);
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .spec div:last-of-type dt, .spec div:last-of-type dd { border-bottom: 0; }
+
+  .spec > div { display: contents; }
+
+  section { display: flex; flex-direction: column; gap: 14px; }
+
+  .venues {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .venues li {
+    font-family: "Archivo", Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .01em;
+    padding: 5px 11px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    color: var(--ink-soft);
+    background: var(--surface);
+  }
+
+  /* ---- faq ---- */
+
+  .faq { margin: 0; display: flex; flex-direction: column; gap: 18px; }
+
+  .faq dt {
+    font-family: "Archivo", Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .faq dd { margin: 0; font-size: 16.5px; color: var(--ink-soft); }
+
+  .faq a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+  /* ---- contact ---- */
+
+  .contact {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+    gap: 16px;
+  }
+
+  .contact h2 { color: var(--hot); }
+
+  .reasons { margin: 0; padding-left: 1.1em; color: var(--ink-soft); font-size: 16.5px; }
+  .reasons li { margin-bottom: 4px; }
+
+  .mail {
+    font-family: "Archivo", Arial, sans-serif;
+    font-weight: 700;
+    font-size: clamp(19px, 5.4vw, 25px);
+    letter-spacing: -.01em;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 3px solid var(--hot);
+    padding-bottom: 2px;
+    align-self: flex-start;
+    word-break: break-all;
+  }
+
+  .mail:hover { color: var(--hot); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  .creed {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--hot);
+    padding-left: 12px;
+  }
+
+  .sig {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+</style>
+
 </head>
 <body>
-  <p>
-    Taking you to <strong>The Funk Board</strong>.<br>
-    <a href="https://gist.github.com/iblaine/b0554c3350592f6bf0e305249da1d173">Tap here if nothing happens.</a>
-  </p>
-  <script>
-    location.replace("https://gist.github.com/iblaine/b0554c3350592f6bf0e305249da1d173");
-  </script>
+<div class="page">
+
+  <header>
+    <p class="eyebrow">You are standing in front of it</p>
+    <h1>The Funk Board</h1>
+    <div class="wall">
+      <canvas id="hero" aria-label="A scrolling LED marquee reading: 8,448 lights. Planes overhead, rockets over Vandenberg, ships in the channel, and whoever is pouring downstairs."></canvas>
+    </div>
+    <p class="wall-note">Preview, sped up. The real wall crawls.</p>
+    <p class="deck">It is a wall of 8,448 lights. It watches the planes going over Santa Barbara, the rockets going up from Vandenberg, the cruise ships in the channel, and whatever the businesses downstairs are up to tonight. One card at a time, forever.</p>
+    <p class="lede">Nobody types any of it in. The sign is reading the same public radio traffic that air traffic control and the harbor read, and turning it into something you can watch while you finish a beer.</p>
+  </header>
+
+  <section>
+    <h2>What goes by</h2>
+    <div class="kinds">
+
+      <div class="kind">
+        <div class="kind-head"><span class="kind-name">Aircraft</span><span class="kind-src">ADS-B</span></div>
+        <div class="strip"><canvas class="mini" data-text="ALASKA 3402 SEA-SBA E175"></canvas></div>
+        <p>Planes flying over, with the airline, where the flight started, where it lands, the type of aircraft and how many seats it holds. Aircraft broadcast their position in the clear, so if one is above you it is usually on the sign about a minute later. Look up, then look at the wall.</p>
+      </div>
+
+      <div class="kind">
+        <div class="kind-head"><span class="kind-name">Rockets</span><span class="kind-src">Vandenberg</span></div>
+        <div class="strip"><canvas class="mini" data-text="FALCON 9  STARLINK  T-04:12"></canvas></div>
+        <p>Vandenberg is up the coast, and it launches often. When one is close the sign stops being polite: at five minutes out it drops whatever it was saying, flashes, and counts down in the middle of the wall. At liftoff it goes all red for two minutes. Then it goes back to talking about planes as though nothing happened.</p>
+      </div>
+
+      <div class="kind">
+        <div class="kind-head"><span class="kind-name">Ships</span><span class="kind-src">AIS + port schedule</span></div>
+        <div class="strip"><canvas class="mini" data-text="RUBY PRINCESS 3080 ABOARD"></canvas></div>
+        <p>Cruise ships calling at Santa Barbara: which ship, whether it is arriving, sitting, or leaving, and how many people it carries. Boats run the same kind of open beacon planes do.</p>
+      </div>
+
+      <div class="kind">
+        <div class="kind-head"><span class="kind-name">Neighbors</span><span class="kind-src">the businesses here</span></div>
+        <div class="strip"><canvas class="mini" data-text="LLAMA DOG  BAND FRI 7PM"></canvas></div>
+        <p>Who is open, who is pouring what, and who has a band on the patio. Every business in the building gets its own card and can change what its card says.</p>
+      </div>
+
+      <div class="kind">
+        <div class="kind-head"><span class="kind-name">A clock</span><span class="kind-src">when the feed is out</span></div>
+        <div class="strip"><canvas class="mini" data-text="7:42 PM"></canvas></div>
+        <p>If the connection drops, the sign does not show you an old plane and hope you do not notice. It gives up honestly and shows the time until the data comes back.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>How it is built</h2>
+    <p class="deck">Two computers, three thousand miles apart, and neither one can do the job alone.</p>
+
+    <figure class="flow">
+      <svg viewBox="0 0 340 404" role="img" aria-label="Flow diagram: aircraft, ship and venue data is polled every thirty seconds by an EC2 instance in Virginia, which sends one finished list over wifi to an ESP32-S3 on the back of the wall, which drives thirty-three LED panels over four data chains.">
+        <defs>
+          <marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+          </marker>
+        </defs>
+
+        <rect x="20" y="6" width="300" height="56" rx="3" fill="none" stroke="currentColor" stroke-opacity=".3"></rect>
+        <text class="flow-t" x="36" y="30">Planes, rockets, ships, the bar downstairs</text>
+        <text class="flow-s" x="36" y="48">radio beacons in the open air, and a shared sheet</text>
+
+        <line x1="52" y1="66" x2="52" y2="104" stroke="currentColor" stroke-opacity=".5" marker-end="url(#tip)"></line>
+        <text class="flow-a" x="66" y="90">asked, every 30 seconds</text>
+
+        <rect class="flow-box-hot" x="20" y="112" width="300" height="74" rx="3" fill="none"></rect>
+        <text class="flow-t flow-hot" x="36" y="136">A rented computer in Virginia</text>
+        <text class="flow-s" x="36" y="154">AWS EC2 t4g.nano, 512 MB, about $3 a month</text>
+        <text class="flow-s" x="36" y="172">names the plane, finds the route, picks the order</text>
+
+        <line x1="52" y1="190" x2="52" y2="228" stroke="currentColor" stroke-opacity=".5" marker-end="url(#tip)"></line>
+        <text class="flow-a" x="66" y="214">one finished list, over wifi</text>
+
+        <rect x="20" y="236" width="300" height="56" rx="3" fill="none" stroke="currentColor" stroke-opacity=".3"></rect>
+        <text class="flow-t" x="36" y="260">An ESP32 behind the wall</text>
+        <text class="flow-s" x="36" y="278">no database, no lookups, nothing to forget</text>
+
+        <line x1="52" y1="296" x2="52" y2="334" stroke="currentColor" stroke-opacity=".5" marker-end="url(#tip)"></line>
+        <text class="flow-a" x="66" y="320">four data chains</text>
+
+        <rect x="20" y="342" width="300" height="56" rx="3" fill="none" stroke="currentColor" stroke-opacity=".3"></rect>
+        <text class="flow-t" x="36" y="366">33 panels, 8,448 lights</text>
+        <text class="flow-s" x="36" y="384">what you are looking at</text>
+      </svg>
+      <figcaption>Everything hard happens in Virginia. The wall only draws.</figcaption>
+    </figure>
+
+    <div class="halves">
+      <div class="half">
+        <p class="half-h">The wall</p>
+        <p>An ESP32-S3, a microcontroller that costs about as much as a sandwich and has roughly a thousandth of the memory in your phone. It runs four data chains out to 33 panels and spends nearly all of its attention pushing color into 8,448 lights, one frame at a time. It stores nothing and looks nothing up. It asks one question every 30 seconds and draws whatever comes back.</p>
+      </div>
+      <div class="half">
+        <p class="half-h">The brain</p>
+        <p>A small Amazon EC2 instance in a data center in northern Virginia, the cheapest size they rent, half a gigabyte of memory, around three dollars a month. It does all the asking around: which aircraft is that, where did it take off, how many seats, which ship is due in, what does the brewery want to say tonight. Then it hands the wall a finished list.</p>
+      </div>
+    </div>
+
+    <dl class="spec">
+      <div><dt>Panels</dt><dd>33, in a grid 11 wide and 3 tall</dd></div>
+      <div><dt>Lights</dt><dd>8,448 addressable RGB LEDs</dd></div>
+      <div><dt>Size</dt><dd>about 70 by 19 inches</dd></div>
+      <div><dt>On the wall</dt><dd>one ESP32-S3 microcontroller</dd></div>
+      <div><dt>In the cloud</dt><dd>one AWS EC2 t4g.nano, us-east-1</dd></div>
+      <div><dt>Power</dt><dd>5 volts at up to 60 amps</dd></div>
+      <div><dt>Refresh</dt><dd>new list every 30 seconds</dd></div>
+      <div><dt>Scroll</dt><dd>roughly 4 pixels per second</dd></div>
+    </dl>
+
+    <p class="lede">That split is the whole trick. Doing the lookups on the wall would cost frames, and a sign that stutters is worse than a sign that is slightly behind. It is also why the sign would rather show you a clock than a lie: it keeps no copy of yesterday, so when Virginia goes quiet there is nothing stale for it to fall back on, and it tells you instead.</p>
+  </section>
+
+  <section>
+    <h2>Where it lives</h2>
+    <p class="lede">On this wall, at the Waterline in Santa Barbara. The businesses it speaks for:</p>
+    <ul class="venues">
+      <li>Topa Topa</li>
+      <li>Blair Fox</li>
+      <li>Llama Dog</li>
+      <li>The Mullet</li>
+      <li>The Nook</li>
+      <li>Summerland Leather</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Questions people actually ask</h2>
+    <dl class="faq">
+      <dt>Why build this?</dt>
+      <dd>Just because. Have you seen my <a href="https://www.iblaine.com/strandbeest-bike/">Walking Bike</a>?</dd>
+
+      <dt>Did the whole wall just flash red?</dt>
+      <dd>Yes. Something left Vandenberg.</dd>
+
+      <dt>Is it watching me?</dt>
+      <dd>No. It has no camera, no microphone, and no idea you are standing there. It reads radio from aircraft and ships that are broadcasting on purpose, a launch schedule, and a spreadsheet. The most personal thing it knows is what time it is.</dd>
+
+      <dt>Can you put my flight on it?</dt>
+      <dd>Fly over Santa Barbara and it will do that by itself. On a schedule, for a fee, no.</dd>
+
+      <dt>Why is it so slow?</dt>
+      <dd>It moves about four pixels a second, which is roughly the reading speed of a person holding a drink. Faster looked frantic. This is a wall, not a notification.</dd>
+
+      <dt>Why does it say Summerland and not Summerland Leather?</dt>
+      <dd>The name row on a card holds fourteen characters. The trade did not fit, so the tagline underneath had to carry it.</dd>
+
+      <dt>Did you draw the little pictures?</dt>
+      <dd>Yes, one pixel at a time, forty-eight by forty-eight, which is a strange hobby to admit to in writing.</dd>
+
+      <dt>What happens if I unplug it?</dt>
+      <dd>It comes back on its own and picks up wherever the world got to while it was out. The part I would rather you did not touch is the power supply, which pushes sixty amps and has opinions.</dd>
+
+      <dt>Can I buy space on it?</dt>
+      <dd>No. See the last line of this page.</dd>
+    </dl>
+  </section>
+
+  <section class="contact">
+    <h2>Talk to me</h2>
+    <p class="lede">I built this. I read everything that comes in.</p>
+    <ul class="reasons">
+      <li>You thought of something it should be showing.</li>
+      <li>You want one of your own. This can be done for the right price.</li>
+      <li>You just want to know how a piece of it works.</li>
+    </ul>
+    <a class="mail" href="mailto:iblaine@gmail.com?subject=The%20sign%20on%20the%20wall">iblaine@gmail.com</a>
+    <p class="sig">Blaine</p>
+    <p class="creed">The Funk Board does not do ads and is programmed to self destruct should that ever happen.</p>
+  </section>
+
+  <footer>
+    Built by hand in the Funk Zone, Santa Barbara.<br>
+    The planes and the ships are telling the truth about themselves. The sign just repeats it.
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SCALE = 6;          // device pixels per LED
+  var PANEL = 16;         // LEDs per physical panel, used for the seams
+  var HERO_W = 176, HERO_H = 48;   // 11 x 3 panels, the real geometry
+  var MINI_W = 176, MINI_H = 16;   // one panel row
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Rasterize text into a boolean bitmap by drawing it small and reading it
+  // back, which is what gives the low-resolution letterforms.
+  function raster(text, rows, px) {
+    var c = document.createElement("canvas");
+    var g = c.getContext("2d");
+    var font = "700 " + px + "px Archivo, 'Helvetica Neue', Arial, sans-serif";
+    g.font = font;
+    var w = Math.ceil(g.measureText(text).width) + 4;
+    c.width = w;
+    c.height = rows;
+    g = c.getContext("2d");
+    g.font = font;
+    g.textBaseline = "middle";
+    g.fillStyle = "#fff";
+    g.fillText(text, 2, Math.round(rows / 2) + 1);
+    var data = g.getImageData(0, 0, w, rows).data;
+    var bits = new Uint8Array(w * rows);
+    for (var i = 0, n = w * rows; i < n; i++) bits[i] = data[i * 4 + 3] > 110 ? 1 : 0;
+    return { w: w, h: rows, bits: bits };
+  }
+
+  // The dark grid the lit pixels sit on, drawn once and blitted every frame.
+  function backdrop(cols, rows) {
+    var c = document.createElement("canvas");
+    c.width = cols * SCALE;
+    c.height = rows * SCALE;
+    var g = c.getContext("2d");
+    g.fillStyle = "#05080A";
+    g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = "#151E22";
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        g.beginPath();
+        g.arc(x * SCALE + SCALE / 2, y * SCALE + SCALE / 2, SCALE * 0.26, 0, 6.2832);
+        g.fill();
+      }
+    }
+    g.strokeStyle = "rgba(120,160,170,.09)";
+    g.lineWidth = 1;
+    for (var sx = PANEL; sx < cols; sx += PANEL) {
+      g.beginPath();
+      g.moveTo(sx * SCALE - .5, 0);
+      g.lineTo(sx * SCALE - .5, c.height);
+      g.stroke();
+    }
+    for (var sy = PANEL; sy < rows; sy += PANEL) {
+      g.beginPath();
+      g.moveTo(0, sy * SCALE - .5);
+      g.lineTo(c.width, sy * SCALE - .5);
+      g.stroke();
+    }
+    return c;
+  }
+
+  function setup(canvas, cols, rows) {
+    canvas.width = cols * SCALE;
+    canvas.height = rows * SCALE;
+    canvas.style.aspectRatio = cols + " / " + rows;
+    return canvas.getContext("2d");
+  }
+
+  // One frame: paint the grid, then light the pixels the text lands on. Hue
+  // walks with the column the way the real marquee's rainbow does.
+  function paint(g, grid, cols, rows, art, offset, hueShift) {
+    g.clearRect(0, 0, cols * SCALE, rows * SCALE);
+    g.drawImage(grid, 0, 0);
+    var lit = [];
+    for (var y = 0; y < rows; y++) {
+      var srcY = y - Math.floor((rows - art.h) / 2);
+      if (srcY < 0 || srcY >= art.h) continue;
+      for (var x = 0; x < cols; x++) {
+        var srcX = x + offset;
+        if (srcX < 0 || srcX >= art.w) continue;
+        if (!art.bits[srcY * art.w + srcX]) continue;
+        lit.push(x, y, (srcX * 1.7 + hueShift) % 360);
+      }
+    }
+    var i;
+    g.globalCompositeOperation = "lighter";
+    for (i = 0; i < lit.length; i += 3) {
+      g.fillStyle = "hsla(" + lit[i + 2] + ",95%,58%,.20)";
+      g.beginPath();
+      g.arc(lit[i] * SCALE + SCALE / 2, lit[i + 1] * SCALE + SCALE / 2, SCALE * 0.82, 0, 6.2832);
+      g.fill();
+    }
+    g.globalCompositeOperation = "source-over";
+    for (i = 0; i < lit.length; i += 3) {
+      g.fillStyle = "hsl(" + lit[i + 2] + ",95%,66%)";
+      g.beginPath();
+      g.arc(lit[i] * SCALE + SCALE / 2, lit[i + 1] * SCALE + SCALE / 2, SCALE * 0.34, 0, 6.2832);
+      g.fill();
+    }
+  }
+
+  function start() {
+    var heroCanvas = document.getElementById("hero");
+    var g = setup(heroCanvas, HERO_W, HERO_H);
+    var grid = backdrop(HERO_W, HERO_H);
+    var art = raster("8,448 LIGHTS.  PLANES OVERHEAD, ROCKETS OVER VANDENBERG, SHIPS IN THE CHANNEL, AND WHOEVER IS POURING DOWNSTAIRS.   ", 34, 30);
+
+    var minis = [].slice.call(document.querySelectorAll(".mini"));
+    minis.forEach(function (canvas) {
+      var mg = setup(canvas, MINI_W, MINI_H);
+      var mgrid = backdrop(MINI_W, MINI_H);
+      var text = canvas.getAttribute("data-text");
+      var mart = raster(text, 12, 11);
+      canvas.setAttribute("role", "img");
+      canvas.setAttribute("aria-label", text);
+      paint(mg, mgrid, MINI_W, MINI_H, mart, -Math.floor((MINI_W - mart.w) / 2), 40);
+    });
+
+    // Start with the message already entering, so the first frame is not an
+    // empty wall.
+    var head = HERO_W - 20;
+    var span = art.w + HERO_W;
+
+    if (reduced) {
+      paint(g, grid, HERO_W, HERO_H, art, -20, 0);
+      return;
+    }
+
+    var t0 = null;
+    function frame(t) {
+      if (t0 === null) t0 = t;
+      var elapsed = (t - t0) / 1000;
+      var offset = (Math.floor(elapsed * 26) + head) % span - HERO_W;
+      paint(g, grid, HERO_W, HERO_H, art, offset, elapsed * 34);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(start).catch(start);
+  } else {
+    start();
+  }
+})();
+</script>
 </body>
 </html>
