@@ -381,9 +381,9 @@ sitemap: false
     <p class="eyebrow">You are standing in front of it</p>
     <h1>The Funk Board</h1>
     <div class="wall">
-      <canvas id="hero" aria-label="A scrolling LED marquee reading: 8,448 lights. Planes overhead, rockets over Vandenberg, ships in the channel, and whoever is pouring downstairs."></canvas>
+      <canvas id="hero" aria-label="The LED wall zooming in on a pixel-art Rick until his eyes fill the panel and look left and right, then pulling back out, followed by a scrolling marquee reading The Funk Board, 8,448 lights, Santa Barbara."></canvas>
     </div>
-    <p class="wall-note">Preview, sped up. The real wall crawls.</p>
+    <p class="wall-note">Rick, zooming. The sign does this between the planes and the ships. Sped up: the wall takes half a minute over it.</p>
     <p class="deck">It is a wall of 8,448 lights. It watches the planes going over Santa Barbara, the rockets going up from Vandenberg, the cruise ships in the channel, and whatever the businesses downstairs are up to tonight. One card at a time, forever.</p>
     <p class="lede">Nobody types any of it in. The sign is reading the same public radio traffic that air traffic control and the harbor read, and turning it into something you can watch while you finish a beer.</p>
   </header>
@@ -665,15 +665,16 @@ sitemap: false
 
   // One frame of a rendered card. Every lit pixel keeps the colour the sign
   // gave it: the amber origin, the green destination, the purple detail row.
-  function paintFrame(g, grid, cols, rows, art, offset) {
+  function paintFrame(g, grid, cols, rows, art, offset, srcY) {
+    var oy = srcY || 0;
     g.clearRect(0, 0, cols * SCALE, rows * SCALE);
     g.drawImage(grid, 0, 0);
     var span = art.w + GAP;
-    for (var y = 0; y < rows && y < art.h; y++) {
+    for (var y = 0; y < rows && y + oy < art.h; y++) {
       for (var x = 0; x < cols; x++) {
         var srcX = (x + offset) % span;
         if (srcX >= art.w) continue;
-        var i = (y * art.w + srcX) * 4;
+        var i = ((y + oy) * art.w + srcX) * 4;
         var r = art.px[i], gg = art.px[i + 1], b = art.px[i + 2];
         if (r + gg + b < 24) continue;
         var cx = x * SCALE + SCALE / 2;
@@ -692,11 +693,21 @@ sitemap: false
     }
   }
 
+  // The zoom form, frame by frame, at about four times the pace the wall
+  // plays it: PortraitScene holds the eyes for 19.8 of its 32 seconds.
+  var ZOOM = [
+    [0, 1000], [1, 340], [2, 340], [3, 340],
+    [4, 420], [5, 480], [6, 420], [5, 480],
+    [4, 420], [5, 480], [6, 420],
+    [7, 340], [8, 760]
+  ];
+  var ZOOM_MS = ZOOM.reduce(function (sum, step) { return sum + step[1]; }, 0);
+
   function start() {
     var heroCanvas = document.getElementById("hero");
     var g = setup(heroCanvas, HERO_W, HERO_H);
     var grid = backdrop(HERO_W, HERO_H);
-    var art = raster("8,448 LIGHTS.  PLANES OVERHEAD, ROCKETS OVER VANDENBERG, SHIPS IN THE CHANNEL, AND WHOEVER IS POURING DOWNSTAIRS.   ", 34, 30);
+    var art = raster("THE FUNK BOARD  \u2022  8,448 LIGHTS  \u2022  SANTA BARBARA   ", 34, 30);
 
     // The card strips are real frames off the sign's own renderer, drawn back
     // out one LED at a time. A card wider than the panel scrolls, because that
@@ -709,47 +720,73 @@ sitemap: false
       canvas.setAttribute("role", "img");
       canvas.setAttribute("aria-label", canvas.getAttribute("data-alt") || "");
 
-      var img = new Image();
-      img.onload = function () {
-        var off = document.createElement("canvas");
-        off.width = img.width;
-        off.height = img.height;
-        var oc = off.getContext("2d", { willReadFrequently: true });
-        oc.drawImage(img, 0, 0);
-        var px = oc.getImageData(0, 0, img.width, img.height).data;
-        var art = { w: img.width, h: img.height, px: px };
-
-        if (reduced || art.w <= cols) {
-          paintFrame(mg, mgrid, cols, rows, art, 0);
+      loadFrames(canvas.getAttribute("data-frame"), function (sheet) {
+        if (reduced || sheet.w <= cols) {
+          paintFrame(mg, mgrid, cols, rows, sheet, 0);
           return;
         }
-        var span = art.w + GAP;
+        var span = sheet.w + GAP;
         var t0 = null;
-        function step(t) {
+        requestAnimationFrame(function step(t) {
           if (t0 === null) t0 = t;
-          paintFrame(mg, mgrid, cols, rows, art,
+          paintFrame(mg, mgrid, cols, rows, sheet,
                      Math.floor((t - t0) / 1000 * CARD_PPS) % span);
           requestAnimationFrame(step);
-        }
-        requestAnimationFrame(step);
-      };
-      img.src = canvas.getAttribute("data-frame");
+        });
+      });
     });
 
-    if (reduced) {
-      paint(g, grid, HERO_W, HERO_H, art, -20, 0);
-      return;
-    }
+    loadFrames("/assets/funkboard/rick_zoom.png", function (sheet) {
+      if (reduced) {
+        paintFrame(g, grid, HERO_W, HERO_H, sheet, 0, 0);
+        return;
+      }
 
-    var t0 = null;
-    function frame(t) {
-      if (t0 === null) t0 = t;
-      var elapsed = (t - t0) / 1000;
-      var offset = (Math.floor(elapsed * 26) + head) % span - HERO_W;
-      paint(g, grid, HERO_W, HERO_H, art, offset, elapsed * 34);
-      requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
+      var marqueeSpan = art.w + HERO_W;
+      var marqueeMs = marqueeSpan / 44 * 1000;
+      var t0 = null;
+
+      requestAnimationFrame(function frame(t) {
+        if (t0 === null) t0 = t;
+        var into = t - t0;
+
+        if (into < ZOOM_MS) {
+          var at = 0;
+          for (var i = 0; i < ZOOM.length; i++) {
+            at += ZOOM[i][1];
+            if (into < at) {
+              paintFrame(g, grid, HERO_W, HERO_H, sheet, 0, ZOOM[i][0] * HERO_H);
+              break;
+            }
+          }
+        } else if (into < ZOOM_MS + marqueeMs) {
+          var run = (into - ZOOM_MS) / 1000;
+          paint(g, grid, HERO_W, HERO_H, art,
+                Math.floor(run * 44) - HERO_W, run * 34);
+        } else {
+          t0 = t;
+        }
+        requestAnimationFrame(frame);
+      });
+    });
+  }
+
+  // A PNG of stacked 176-wide frames, as raw pixels.
+  function loadFrames(src, then) {
+    var img = new Image();
+    img.onload = function () {
+      var off = document.createElement("canvas");
+      off.width = img.width;
+      off.height = img.height;
+      var oc = off.getContext("2d", { willReadFrequently: true });
+      oc.drawImage(img, 0, 0);
+      then({
+        w: img.width,
+        h: img.height,
+        px: oc.getImageData(0, 0, img.width, img.height).data
+      });
+    };
+    img.src = src;
   }
 
   if (document.fonts && document.fonts.ready) {
