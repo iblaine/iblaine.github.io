@@ -124,9 +124,12 @@ sitemap: false
 
   .deck {
     font-size: 20px;
-    line-height: 1.5;
+    line-height: 1.55;
     color: var(--ink);
-    text-wrap: pretty;
+    /* balance, not pretty: four lines of roughly equal length read as a
+       deliberate block, where a long-long-long-short rag reads as an accident. */
+    text-wrap: balance;
+    max-width: 32rem;
   }
 
   .lede { color: var(--ink-soft); }
