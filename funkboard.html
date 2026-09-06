@@ -175,8 +175,9 @@ sitemap: false
 
   .strip {
     background: var(--panel-body);
-    border-radius: 2px;
-    padding: 4px 5px;
+    border: 1px solid var(--panel-edge);
+    border-radius: 3px;
+    padding: 6px;
   }
 
   .kind p { font-size: 16.5px; color: var(--ink-soft); }
@@ -389,35 +390,36 @@ sitemap: false
 
   <section>
     <h2>What goes by</h2>
+    <p class="lede">The strips below are not mock-ups. They are real frames, drawn by the same code that drives the wall, scrolling the way the wall scrolls them.</p>
     <div class="kinds">
 
       <div class="kind">
         <div class="kind-head"><span class="kind-name">Aircraft</span><span class="kind-src">ADS-B</span></div>
-        <div class="strip"><canvas class="mini" data-text="ALASKA 3402 SEA-SBA E175"></canvas></div>
+        <div class="strip"><canvas class="mini" data-frame="/assets/funkboard/flight.png" data-w="298" data-alt="A flight card: the United logo, Santa Barbara in amber, an arrow, San Francisco in green, then UAL1573, tail N38403, a 737-900 at 508 mph and 31,000 feet."></canvas></div>
         <p>Planes flying over, with the airline, where the flight started, where it lands, the type of aircraft and how many seats it holds. Aircraft broadcast their position in the clear, so if one is above you it is usually on the sign about a minute later. Look up, then look at the wall.</p>
       </div>
 
       <div class="kind">
         <div class="kind-head"><span class="kind-name">Rockets</span><span class="kind-src">Vandenberg</span></div>
-        <div class="strip"><canvas class="mini" data-text="FALCON 9  STARLINK  T-04:12"></canvas></div>
+        <div class="strip"><canvas class="mini" data-frame="/assets/funkboard/rocket.png" data-w="240" data-alt="A launch card: a rocket on the pad, Falcon 9 Rocket Launch in 3 hours, T-03:42:11, SLC-4E Vandenberg."></canvas></div>
         <p>Vandenberg is up the coast, and it launches often. When one is close the sign stops being polite: at five minutes out it drops whatever it was saying, flashes, and counts down in the middle of the wall. At liftoff it goes all red for two minutes. Then it goes back to talking about planes as though nothing happened.</p>
       </div>
 
       <div class="kind">
         <div class="kind-head"><span class="kind-name">Ships</span><span class="kind-src">AIS + port schedule</span></div>
-        <div class="strip"><canvas class="mini" data-text="RUBY PRINCESS 3080 ABOARD"></canvas></div>
+        <div class="strip"><canvas class="mini" data-frame="/assets/funkboard/ship.png" data-w="183" data-alt="A cruise card: a ship, Royal Princess, ARRIVING T-00:47, 3,600 passengers."></canvas></div>
         <p>Cruise ships calling at Santa Barbara: which ship, whether it is arriving, sitting, or leaving, and how many people it carries. Boats run the same kind of open beacon planes do.</p>
       </div>
 
       <div class="kind">
-        <div class="kind-head"><span class="kind-name">Neighbors</span><span class="kind-src">the businesses here</span></div>
-        <div class="strip"><canvas class="mini" data-text="LLAMA DOG  BAND FRI 7PM"></canvas></div>
+        <div class="kind-head"><span class="kind-name">Neighbors</span><span class="kind-src">a shared sheet</span></div>
+        <div class="strip"><canvas class="mini" data-frame="/assets/funkboard/venue.png" data-w="176" data-alt="A venue card: Topa Topa in orange, CRAFT BREWERY, OPEN TIL 9."></canvas></div>
         <p>Who is open, who is pouring what, and who has a band on the patio. Every business in the building gets its own card and can change what its card says.</p>
       </div>
 
       <div class="kind">
         <div class="kind-head"><span class="kind-name">A clock</span><span class="kind-src">when the feed is out</span></div>
-        <div class="strip"><canvas class="mini" data-text="7:42 PM"></canvas></div>
+        <div class="strip"><canvas class="mini" data-frame="/assets/funkboard/clock.png" data-w="176" data-alt="The clock face: 4:37 in amber over FRI SEP 4."></canvas></div>
         <p>If the connection drops, the sign does not show you an old plane and hope you do not notice. It gives up honestly and shows the time until the data comes back.</p>
       </div>
 
@@ -531,7 +533,7 @@ sitemap: false
       <dd>It comes back on its own and picks up wherever the world got to while it was out. The part I would rather you did not touch is the power supply, which pushes sixty amps and has opinions.</dd>
 
       <dt>Can I buy space on it?</dt>
-      <dd>No. See the last line of this page.</dd>
+      <dd>No. Ads make babies cry. Ever see a baby cry? It is due to advertising.</dd>
     </dl>
   </section>
 
@@ -562,7 +564,9 @@ sitemap: false
   var SCALE = 6;          // device pixels per LED
   var PANEL = 16;         // LEDs per physical panel, used for the seams
   var HERO_W = 176, HERO_H = 48;   // 11 x 3 panels, the real geometry
-  var MINI_W = 176, MINI_H = 16;   // one panel row
+  var MINI_W = 176, MINI_H = 48;   // a card gets the whole panel
+  var GAP = 24;                    // blank columns between passes of a card
+  var CARD_PPS = 22;               // preview scroll; the wall does about 4
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // Rasterize text into a boolean bitmap by drawing it small and reading it
@@ -659,27 +663,78 @@ sitemap: false
     }
   }
 
+  // One frame of a rendered card. Every lit pixel keeps the colour the sign
+  // gave it: the amber origin, the green destination, the purple detail row.
+  function paintFrame(g, grid, cols, rows, art, offset) {
+    g.clearRect(0, 0, cols * SCALE, rows * SCALE);
+    g.drawImage(grid, 0, 0);
+    var span = art.w + GAP;
+    for (var y = 0; y < rows && y < art.h; y++) {
+      for (var x = 0; x < cols; x++) {
+        var srcX = (x + offset) % span;
+        if (srcX >= art.w) continue;
+        var i = (y * art.w + srcX) * 4;
+        var r = art.px[i], gg = art.px[i + 1], b = art.px[i + 2];
+        if (r + gg + b < 24) continue;
+        var cx = x * SCALE + SCALE / 2;
+        var cy = y * SCALE + SCALE / 2;
+        g.globalCompositeOperation = "lighter";
+        g.fillStyle = "rgba(" + r + "," + gg + "," + b + ",.20)";
+        g.beginPath();
+        g.arc(cx, cy, SCALE * 0.82, 0, 6.2832);
+        g.fill();
+        g.globalCompositeOperation = "source-over";
+        g.fillStyle = "rgb(" + r + "," + gg + "," + b + ")";
+        g.beginPath();
+        g.arc(cx, cy, SCALE * 0.34, 0, 6.2832);
+        g.fill();
+      }
+    }
+  }
+
   function start() {
     var heroCanvas = document.getElementById("hero");
     var g = setup(heroCanvas, HERO_W, HERO_H);
     var grid = backdrop(HERO_W, HERO_H);
     var art = raster("8,448 LIGHTS.  PLANES OVERHEAD, ROCKETS OVER VANDENBERG, SHIPS IN THE CHANNEL, AND WHOEVER IS POURING DOWNSTAIRS.   ", 34, 30);
 
-    var minis = [].slice.call(document.querySelectorAll(".mini"));
-    minis.forEach(function (canvas) {
-      var mg = setup(canvas, MINI_W, MINI_H);
-      var mgrid = backdrop(MINI_W, MINI_H);
-      var text = canvas.getAttribute("data-text");
-      var mart = raster(text, 12, 11);
+    // The card strips are real frames off the sign's own renderer, drawn back
+    // out one LED at a time. A card wider than the panel scrolls, because that
+    // is what the wall does with it.
+    [].slice.call(document.querySelectorAll(".mini")).forEach(function (canvas) {
+      var cols = MINI_W;
+      var rows = MINI_H;
+      var mg = setup(canvas, cols, rows);
+      var mgrid = backdrop(cols, rows);
       canvas.setAttribute("role", "img");
-      canvas.setAttribute("aria-label", text);
-      paint(mg, mgrid, MINI_W, MINI_H, mart, -Math.floor((MINI_W - mart.w) / 2), 40);
-    });
+      canvas.setAttribute("aria-label", canvas.getAttribute("data-alt") || "");
 
-    // Start with the message already entering, so the first frame is not an
-    // empty wall.
-    var head = HERO_W - 20;
-    var span = art.w + HERO_W;
+      var img = new Image();
+      img.onload = function () {
+        var off = document.createElement("canvas");
+        off.width = img.width;
+        off.height = img.height;
+        var oc = off.getContext("2d", { willReadFrequently: true });
+        oc.drawImage(img, 0, 0);
+        var px = oc.getImageData(0, 0, img.width, img.height).data;
+        var art = { w: img.width, h: img.height, px: px };
+
+        if (reduced || art.w <= cols) {
+          paintFrame(mg, mgrid, cols, rows, art, 0);
+          return;
+        }
+        var span = art.w + GAP;
+        var t0 = null;
+        function step(t) {
+          if (t0 === null) t0 = t;
+          paintFrame(mg, mgrid, cols, rows, art,
+                     Math.floor((t - t0) / 1000 * CARD_PPS) % span);
+          requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      };
+      img.src = canvas.getAttribute("data-frame");
+    });
 
     if (reduced) {
       paint(g, grid, HERO_W, HERO_H, art, -20, 0);
